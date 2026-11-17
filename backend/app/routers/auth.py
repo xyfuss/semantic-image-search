@@ -24,7 +24,7 @@ def register(data: UserCreate, db: Session = Depends(get_db)):
 @router.post('/login', response_model=Token,status_code=status.HTTP_200_OK)
 def login(data: UserLogin, db: Session = Depends(get_db)):
     user = db.scalar(select(User).where(User.username == data.username))
-    if not user or verify_password(data.password, user.password_hash):
+    if not user or not verify_password(data.password, user.password_hash):
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED, 
             "Invalid username or password.",

@@ -11,12 +11,12 @@ class UserCreate(BaseModel):
     @field_validator("username")
     @classmethod
     def strip_name(cls, v: str) -> str:
-        return v.strip
+        return v.strip()
 
     @field_validator("password")
     @classmethod
     def byte_check(cls, v: str) -> str:
-        if (len(v.encode)) > 72:
+        if len(v.encode("utf-8")) > 72:
             raise ValueError("Password must be at most 72 bytes.")
         return v
 
