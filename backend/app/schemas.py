@@ -13,6 +13,12 @@ class UserCreate(BaseModel):
     def strip_name(cls, v: str) -> str:
         return v.strip
 
+    @field_validator("password")
+    @classmethod
+    def byte_check(cls, v: str) -> str:
+        if (len(v.encode)) > 72:
+            raise ValueError("Password must be at most 72 bytes.")
+        return v
 
 
 class UserOut(OrmModel):
