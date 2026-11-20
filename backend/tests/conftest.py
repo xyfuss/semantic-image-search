@@ -34,3 +34,9 @@ def client():
     yield TestClient(app)
     app.dependency_overrides.clear
     engine.dispose()
+
+@pytest.fixture
+def registered_user(client):
+    payload = {"username": "jonas", "password": "testpassword123"}
+    client.post("/auth/register", json=payload)
+    return payload
