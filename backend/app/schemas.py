@@ -33,6 +33,15 @@ class ImageOut(OrmModel):
     status: str
     created_at: datetime
 
+class ImageSignRequest(BaseModel):
+    content_type: str
+    size: int = Field(gt=0)
+
+class ImageSignResponse(BaseModel):
+    upload_url: str
+    storage_key: str
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
