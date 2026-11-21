@@ -2,6 +2,12 @@ import os
 
 os.environ['DATABASE_URL'] = 'sqlite://'
 os.environ["SECRET_KEY"] = "test-secret-key-that-is-at-least-32-bytes-long"
+os.environ["R2_ENDPOINT_URL"] = "https://test.r2.cloudflarestorage.com"
+os.environ["R2_ACCESS_KEY"] = "test-access-key"
+os.environ["R2_SECRET_ACCESS_KEY"] = "test-secret"
+os.environ["R2_BUCKET"] = "test-bucket"
+
+
 
 import pytest
 from fastapi.testclient import TestClient
