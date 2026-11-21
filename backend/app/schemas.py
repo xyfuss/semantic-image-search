@@ -27,10 +27,12 @@ class UserOut(OrmModel):
 
 class ImageCreate(BaseModel):
     storage_key: str = Field(pattern=r"^\d+/[0-9a-f]{32}\.(jpg|png|webp)$")
+
 class ImageOut(OrmModel):
     id: int
     status: str
     created_at: datetime
+    url: str | None = None
 
 class ImageSignRequest(BaseModel):
     content_type: str

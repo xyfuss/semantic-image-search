@@ -40,3 +40,21 @@ def complete(data: ImageCreate, db: Session = Depends(get_db), current_user: Use
     db.commit()
     db.refresh(image)
     return image
+
+@router.get('/', response_model=ImageOut)
+def get(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    images = db.scalars(
+        select(Image)
+        .where(Image.user_id == current_user.id)
+        .order_by(Image.created_at.desc())
+    ).all()
+    return [
+        ImageOut(
+        id=img.id,
+        status=img.status,
+        created_at=img.created_at,
+        url=create_presigned_get(img.storage_key),
+        )
+        for img in images
+    ]
+        
