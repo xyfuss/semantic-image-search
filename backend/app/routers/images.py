@@ -57,4 +57,21 @@ def list_images(db: Session = Depends(get_db), current_user: User = Depends(get_
         )
         for img in images
     ]
-        
+
+@router.delete('/{image_id}', status_code=status.HTTP_204_NO_CONTENT)
+def delete_img(
+    image_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    image = db.scalar(
+        select(Image).where(Image.id == image_id, User.id == current_user.id)
+    )
+    if image is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Image not found.")
+
+    storage_key = image.storage_key
+    db.delete(image)
+    db.commit()
+    delete_object(storage_key)
+
