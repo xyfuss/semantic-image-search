@@ -26,8 +26,7 @@ class UserOut(OrmModel):
     id: int
 
 class ImageCreate(BaseModel):
-    storage_key: str = Field(pattern=r"^[0-9a-f]{32}\.(jpg|png|webp)$")
-
+    storage_key: str = Field(pattern=r"^\d+/[0-9a-f]{32}\.(jpg|png|webp)$")
 class ImageOut(OrmModel):
     id: int
     status: str
