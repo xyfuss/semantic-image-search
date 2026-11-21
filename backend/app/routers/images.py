@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 import uuid
 
 from app.database import get_db
-from app.storage import create_presigned_put, object_size, delete_object
+from app.storage import create_presigned_get, create_presigned_put, object_size, delete_object
 from app.schemas import ImageSignRequest, ImageSignResponse, ImageCreate, ImageOut
 from app.dependencies import get_current_user
 from app.models import Image, User
@@ -41,8 +41,8 @@ def complete(data: ImageCreate, db: Session = Depends(get_db), current_user: Use
     db.refresh(image)
     return image
 
-@router.get('/', response_model=ImageOut)
-def get(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+@router.get('', response_model=list[ImageOut])
+def list_images(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     images = db.scalars(
         select(Image)
         .where(Image.user_id == current_user.id)
@@ -50,10 +50,10 @@ def get(db: Session = Depends(get_db), current_user: User = Depends(get_current_
     ).all()
     return [
         ImageOut(
-        id=img.id,
-        status=img.status,
-        created_at=img.created_at,
-        url=create_presigned_get(img.storage_key),
+            id=img.id,
+            status=img.status,
+            created_at=img.created_at,
+            url=create_presigned_get(img.storage_key),
         )
         for img in images
     ]
