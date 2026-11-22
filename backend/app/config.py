@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     r2_secret_access_key: str
     r2_endpoint_url: str
     r2_bucket: str
+    redis_url: str
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

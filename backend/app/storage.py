@@ -41,3 +41,6 @@ def object_size(key):
 
 def delete_object(key):
     head = s3.delete_object(Bucket=settings.r2_bucket, Key=key)
+
+def download_object(key):
+    return s3.get_object(Bucket=settings.r2_bucket, Key=key)["Body"].read()

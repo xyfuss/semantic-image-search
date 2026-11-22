@@ -6,7 +6,7 @@ os.environ["R2_ENDPOINT_URL"] = "https://test.r2.cloudflarestorage.com"
 os.environ["R2_ACCESS_KEY"] = "test-access-key"
 os.environ["R2_SECRET_ACCESS_KEY"] = "test-secret"
 os.environ["R2_BUCKET"] = "test-bucket"
-
+os.environ["REDIS_URL"] = "redis://localhost:6379/0"
 
 
 import pytest
@@ -85,3 +85,10 @@ def fake_storage(monkeypatch):
     fake = Fake()
     fake.objects, fake.deleted = objects, deleted
     return fake
+
+@pytest.fixture(autouse=True)
+def fake_queue(monkeypatch):
+    enqueued = []
+    monkeypatch.setattr("app.routers.images.queue.enqueue",
+                        lambda fn, *args, **kwargs: enqueued.append((fn, args)))
+    return enqueued
