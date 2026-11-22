@@ -6,7 +6,7 @@ os.environ["R2_ENDPOINT_URL"] = "https://test.r2.cloudflarestorage.com"
 os.environ["R2_ACCESS_KEY"] = "test-access-key"
 os.environ["R2_SECRET_ACCESS_KEY"] = "test-secret"
 os.environ["R2_BUCKET"] = "test-bucket"
-os.environ["REDIS_URL"] = "redis://localhost:port/0"
+os.environ["REDIS_URL"] = "redis://localhost:6379/0"
 
 
 import pytest
