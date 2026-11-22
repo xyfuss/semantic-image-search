@@ -9,7 +9,6 @@ from app.schemas import ImageSignRequest, ImageSignResponse, ImageCreate, ImageO
 from app.dependencies import get_current_user
 from app.models import Image, User
 from app.queue import queue
-from app.jobs import process_image
 
 router = APIRouter(prefix="/images", tags=["images"])
 
@@ -52,7 +51,7 @@ def complete(data: ImageCreate, db: Session = Depends(get_db), current_user: Use
     db.add(image)
     db.commit()
     db.refresh(image)
-    queue.enqueue(process_image, image.id)
+    queue.enqueue("app.jobs.process_image", image.id)
 
     return image
 
