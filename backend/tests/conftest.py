@@ -85,3 +85,10 @@ def fake_storage(monkeypatch):
     fake = Fake()
     fake.objects, fake.deleted = objects, deleted
     return fake
+
+@pytest.fixture(autouse=True)
+def fake_queue(monkeypatch):
+    enqueued = []
+    monkeypatch.setattr("app.routers.images.queue.enqueue",
+                        lambda fn, *args, **kwargs: enqueued.append((fn, args)))
+    return enqueued

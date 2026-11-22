@@ -1,5 +1,4 @@
 def upload_image(client, headers, fake_storage, size=1000):
-    """Go through sign -> (fake) upload -> complete. Returns the /complete response."""
     r = client.post("/images/sign", headers=headers,
                     json={"content_type": "image/jpeg", "size": size})
     key = r.json()["storage_key"]
