@@ -1,4 +1,3 @@
-
 def test_register_and_login(client):
     r = client.post("/auth/register", json={"username": "test", "password": "testpassword123"})
     assert r.status_code == 201

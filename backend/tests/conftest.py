@@ -15,9 +15,18 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.database import get_db
+from app.database import Base, get_db
 from app.main import app
-from app.models import User
+from app import models
+
+from sqlalchemy.ext.compiler import compiles
+from pgvector.sqlalchemy import Vector
+
+# add sqlite fix with vectors
+@compiles(Vector, "sqlite")
+def compile_vector_sqlite(element, compiler, **kw):
+    return "TEXT"
+
 
 @pytest.fixture
 def client(): 
@@ -26,7 +35,7 @@ def client():
         connect_args={"check_same_thread": False},
         poolclass=StaticPool
     )
-    User.__table__.create(engine)
+    Base.metadata.create_all(engine)
     TestSession = sessionmaker(bind=engine, autoflush=False)
 
     def override_get_db():
@@ -46,3 +55,33 @@ def registered_user(client):
     payload = {"username": "jonas", "password": "testpassword123"}
     client.post("/auth/register", json=payload)
     return payload
+
+
+@pytest.fixture
+def make_user(client):
+    def _make(username="testuser"):
+        creds={"username": username, "password": "testpassword123"}
+        client.post('/auth/register', json=creds)
+        r = client.post('/auth/login', json=creds)
+        return {"Authorization": f"Bearer {r.json()['access_token']}"}
+    return _make
+
+
+@pytest.fixture
+def fake_storage(monkeypatch):
+    objects = {} # key -> size
+    deleted = []
+
+    monkeypatch.setattr("app.routers.images.create_presigned_put",
+                        lambda key, ct: f"https://fake/{key}")
+    monkeypatch.setattr("app.routers.images.create_presigned_get",
+                        lambda key: f"https://fake/{key}")
+    monkeypatch.setattr("app.routers.images.object_size",
+                        lambda key: objects.get(key))
+    monkeypatch.setattr("app.routers.images.delete_object",
+                        lambda key: deleted.append(key))
+    class Fake:
+        pass
+    fake = Fake()
+    fake.objects, fake.deleted = objects, deleted
+    return fake
