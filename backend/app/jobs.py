@@ -15,7 +15,7 @@ def process_image(image_id: int) -> None:
         if image is None:
             return
         try:
-            data = download_object(image)
+            data = download_object(image.storage_key)
             pil_image = PILImage.open(io.BytesIO(data)).convert("RGB")
             image.embedding = embed_image(pil_image)
             image.status = "ready"
