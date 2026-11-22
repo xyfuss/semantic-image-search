@@ -35,14 +35,14 @@ def complete(data: ImageCreate, db: Session = Depends(get_db), current_user: Use
     
     if size is None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Upload not found.")
+     
+    if not data.storage_key.startswith(f"{current_user.id}/"):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Not your upload.")
     
     if size > MAX_SIZE:
         delete_object(data.storage_key)
         raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, "Invalid file size (Max 10MB).")
-    
-    if not data.storage_key.startswith(f"{current_user.id}/"):
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Not your upload.")
-    
+
     if db.scalar(select(Image).where(Image.storage_key == data.storage_key)):
         raise HTTPException(status.HTTP_409_CONFLICT, "Image already exists.")
     
@@ -53,7 +53,12 @@ def complete(data: ImageCreate, db: Session = Depends(get_db), current_user: Use
     db.refresh(image)
     queue.enqueue("app.jobs.process_image", image.id)
 
-    return image
+    return ImageOut(
+        id=image.id,
+        status=image.status,
+        created_at=image.created_at,
+        url=create_presigned_get(image.storage_key),
+    )
 
 @router.get('', response_model=list[ImageOut])
 def list_images(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -82,7 +87,7 @@ def delete_img(
 ):
     
     image = db.scalar(
-        select(Image).where(Image.id == image_id, User.id == current_user.id)
+        select(Image).where(Image.id == image_id, Image.id == current_user.id)
     )
 
     if image is None:
