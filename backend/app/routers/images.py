@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 import uuid
@@ -9,11 +9,23 @@ from app.schemas import ImageSignRequest, ImageSignResponse, ImageCreate, ImageO
 from app.dependencies import get_current_user
 from app.models import Image, User
 from app.queue import queue
+from app.embedding import embed_text
 
 router = APIRouter(prefix="/images", tags=["images"])
 
 MAX_SIZE = 10 * 1024 * 1024
 ALLOWED_TYPES = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp'}
+
+# helper
+def to_image_out(image):
+    return ImageOut(
+            id=image.id,
+            status=image.status,
+            created_at=image.created_at,
+            url=create_presigned_get(image.storage_key),
+    )
+
+
 
 @router.post('/sign', response_model=ImageSignResponse)
 def sign(data: ImageSignRequest, current_user: User = Depends(get_current_user)):
@@ -53,12 +65,7 @@ def complete(data: ImageCreate, db: Session = Depends(get_db), current_user: Use
     db.refresh(image)
     queue.enqueue("app.jobs.process_image", image.id)
 
-    return ImageOut(
-        id=image.id,
-        status=image.status,
-        created_at=image.created_at,
-        url=create_presigned_get(image.storage_key),
-    )
+    return to_image_out(image)
 
 @router.get('', response_model=list[ImageOut])
 def list_images(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -69,15 +76,24 @@ def list_images(db: Session = Depends(get_db), current_user: User = Depends(get_
         .order_by(Image.created_at.desc())
     ).all()
     
-    return [
-        ImageOut(
-            id=img.id,
-            status=img.status,
-            created_at=img.created_at,
-            url=create_presigned_get(img.storage_key),
-        )
-        for img in images
-    ]
+    return [to_image_out(img) for img in images]
+
+
+@router.get('/search', response_model=list[ImageOut])
+def search(query: str = Query(min_length=1, max_length=100),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    query_vec = embed_text(query)
+    images = db.scalars(
+        select(Image)
+        .where(Image.user_id == current_user.id, Image.status == "ready")
+        .order_by(Image.embedding.cosine_distance(query_vec))
+        .limit(20)    
+    ).all()
+
+    return [to_image_out(img) for img in images]
+
 
 @router.delete('/{image_id}', status_code=status.HTTP_204_NO_CONTENT)
 def delete_img(
@@ -99,3 +115,4 @@ def delete_img(
     db.commit()
     delete_object(storage_key)
 
+    
