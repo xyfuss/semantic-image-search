@@ -1,3 +1,7 @@
+from datetime import datetime, timedelta, timezone
+import jwt
+import os
+
 def test_register_and_login(client):
     r = client.post("/auth/register", json={"username": "test", "password": "testpassword123"})
     assert r.status_code == 201
@@ -49,3 +53,12 @@ def test_me_valid_token(client, make_user):
     assert "id" in body
     assert "password_hash" not in body
     assert "password" not in body
+
+def test_me_expired_token(client):
+    token = jwt.encode(
+        {"sub": "1", "exp": datetime.now(timezone.utc) - timedelta(minutes=5)},
+        "test-secret-key-that-is-at-least-32-bytes-long",   # same as SECRET_KEY in conftest
+        algorithm="HS256",
+    )
+    r = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 401
