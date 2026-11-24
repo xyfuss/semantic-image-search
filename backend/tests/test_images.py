@@ -94,3 +94,20 @@ def test_delete_other_users_img(client, make_user, fake_storage):
     r = client.delete(f"/{image_id}", headers=bob)
     assert r.status_code == 404
     assert len(client.get("/images", headers=alice).json()) == 1
+
+
+def test_invalid_size_img(client, make_user):
+    alice = make_user("alice")
+    r = client.post(
+        "/images/sign",
+        headers=alice,
+        json={"content_type": "image/jpeg", "size": 11 * 1024 * 1024},
+    )
+    assert r.status_code == 413
+
+    r = client.post(
+        "/images/sign",
+        headers=alice,
+        json={"content_type": "image/jpeg", "size": 0},
+    )
+    assert r.status_code == 422

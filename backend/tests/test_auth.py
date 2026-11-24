@@ -45,6 +45,9 @@ def test_length_password(client):
     r = client.post("/auth/register", json={"username": "test", "password": "a" * 73})
     assert r.status_code == 422
 
+    r = client.post("/auth/register", json={"username": "test", "password": "é" * 40})
+    assert r.status_code == 422
+
 
 def test_length_username(client):
     r = client.post(
@@ -56,6 +59,21 @@ def test_length_username(client):
         "/auth/register", json={"username": "a" * 31, "password": "testpassword123"}
     )
     assert r.status_code == 422
+
+
+def test_username_strip(client):
+    client.post(
+        "/auth/register", json={"username": "  alice  ", "password": "testpassword123"}
+    )
+
+    r = client.post(
+        "/auth/login", json={"username": "alice", "password": "testpassword123"}
+    )
+    assert r.status_code == 200
+
+    headers = {"Authorization": f"Bearer {r.json()['access_token']}"}
+    body = client.get("/auth/me", headers=headers).json()
+    assert body["username"] == "alice"
 
 
 def test_me_valid_token(client, make_user):
