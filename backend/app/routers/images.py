@@ -42,14 +42,15 @@ def sign(data: ImageSignRequest, current_user: User = Depends(get_current_user))
 
 @router.post('/complete', response_model=ImageOut, status_code=status.HTTP_201_CREATED)
 def complete(data: ImageCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+   
     
+    if not data.storage_key.startswith(f"{current_user.id}/"):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Not your upload.")
+
     size = object_size(data.storage_key)
     
     if size is None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Upload not found.")
-     
-    if not data.storage_key.startswith(f"{current_user.id}/"):
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Not your upload.")
     
     if size > MAX_SIZE:
         delete_object(data.storage_key)
@@ -106,7 +107,7 @@ def delete_img(
         select(Image).where(Image.id == image_id, Image.id == current_user.id)
     )
 
-    if image is None:
+    if image is None or image.id != current_user.id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Image not found.")
 
     storage_key = image.storage_key
