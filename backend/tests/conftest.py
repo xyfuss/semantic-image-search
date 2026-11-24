@@ -1,6 +1,6 @@
 import os
 
-os.environ['DATABASE_URL'] = 'sqlite://'
+os.environ["DATABASE_URL"] = "sqlite://"
 os.environ["SECRET_KEY"] = "test-secret-key-that-is-at-least-32-bytes-long"
 os.environ["R2_ENDPOINT_URL"] = "https://test.r2.cloudflarestorage.com"
 os.environ["R2_ACCESS_KEY"] = "test-access-key"
@@ -22,6 +22,7 @@ from app import models
 from sqlalchemy.ext.compiler import compiles
 from pgvector.sqlalchemy import Vector
 
+
 # add sqlite fix with vectors
 @compiles(Vector, "sqlite")
 def compile_vector_sqlite(element, compiler, **kw):
@@ -29,11 +30,9 @@ def compile_vector_sqlite(element, compiler, **kw):
 
 
 @pytest.fixture
-def client(): 
+def client():
     engine = create_engine(
-        "sqlite://",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool
+        "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
     )
     Base.metadata.create_all(engine)
     TestSession = sessionmaker(bind=engine, autoflush=False)
@@ -50,6 +49,7 @@ def client():
     app.dependency_overrides.clear
     engine.dispose()
 
+
 @pytest.fixture
 def registered_user(client):
     payload = {"username": "jonas", "password": "testpassword123"}
@@ -60,35 +60,43 @@ def registered_user(client):
 @pytest.fixture
 def make_user(client):
     def _make(username="testuser"):
-        creds={"username": username, "password": "testpassword123"}
-        client.post('/auth/register', json=creds)
-        r = client.post('/auth/login', json=creds)
+        creds = {"username": username, "password": "testpassword123"}
+        client.post("/auth/register", json=creds)
+        r = client.post("/auth/login", json=creds)
         return {"Authorization": f"Bearer {r.json()['access_token']}"}
+
     return _make
 
 
 @pytest.fixture
 def fake_storage(monkeypatch):
-    objects = {} # key -> size
+    objects = {}  # key -> size
     deleted = []
 
-    monkeypatch.setattr("app.routers.images.create_presigned_put",
-                        lambda key, ct: f"https://fake/{key}")
-    monkeypatch.setattr("app.routers.images.create_presigned_get",
-                        lambda key: f"https://fake/{key}")
-    monkeypatch.setattr("app.routers.images.object_size",
-                        lambda key: objects.get(key))
-    monkeypatch.setattr("app.routers.images.delete_object",
-                        lambda key: deleted.append(key))
+    monkeypatch.setattr(
+        "app.routers.images.create_presigned_put", lambda key, ct: f"https://fake/{key}"
+    )
+    monkeypatch.setattr(
+        "app.routers.images.create_presigned_get", lambda key: f"https://fake/{key}"
+    )
+    monkeypatch.setattr("app.routers.images.object_size", lambda key: objects.get(key))
+    monkeypatch.setattr(
+        "app.routers.images.delete_object", lambda key: deleted.append(key)
+    )
+
     class Fake:
         pass
+
     fake = Fake()
     fake.objects, fake.deleted = objects, deleted
     return fake
 
+
 @pytest.fixture(autouse=True)
 def fake_queue(monkeypatch):
     enqueued = []
-    monkeypatch.setattr("app.routers.images.queue.enqueue",
-                        lambda fn, *args, **kwargs: enqueued.append((fn, args)))
+    monkeypatch.setattr(
+        "app.routers.images.queue.enqueue",
+        lambda fn, *args, **kwargs: enqueued.append((fn, args)),
+    )
     return enqueued

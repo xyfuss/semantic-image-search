@@ -8,6 +8,7 @@ from app.embedding import embed_image
 from app.models import Image
 from app.storage import download_object
 
+
 def process_image(image_id: int) -> None:
     db = SessionLocal()
     try:

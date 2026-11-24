@@ -1,8 +1,10 @@
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from datetime import datetime
 
+
 class OrmModel(BaseModel):
     model_config = ConfigDict(from_attributes=True)
+
 
 class UserCreate(BaseModel):
     username: str = Field(min_length=3, max_length=30)
@@ -25,8 +27,10 @@ class UserOut(OrmModel):
     username: str
     id: int
 
+
 class ImageCreate(BaseModel):
     storage_key: str = Field(pattern=r"^\d+/[0-9a-f]{32}\.(jpg|png|webp)$")
+
 
 class ImageOut(OrmModel):
     id: int
@@ -34,9 +38,11 @@ class ImageOut(OrmModel):
     created_at: datetime
     url: str | None = None
 
+
 class ImageSignRequest(BaseModel):
     content_type: str
     size: int = Field(gt=0)
+
 
 class ImageSignResponse(BaseModel):
     upload_url: str
@@ -46,6 +52,7 @@ class ImageSignResponse(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
 
 class UserLogin(BaseModel):
     username: str = Field(min_length=3, max_length=30)

@@ -23,9 +23,6 @@ def test_register_duplicate_username(client, registered_user):
     assert second.status_code == 409
 
 
-# test
-
-
 def test_login_wrong_password(client, registered_user):
     r = client.post(
         "/auth/login",

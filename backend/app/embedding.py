@@ -4,9 +4,10 @@ from PIL import Image as PILImage
 from functools import lru_cache
 from typing import Any
 
+
 @lru_cache(maxsize=1)
 def get_model() -> tuple[Any, Any, Any]:
-        
+
     model, _, preprocess = open_clip.create_model_and_transforms(
         "ViT-B-32", pretrained="laion2b_s34b_b79k"
     )
@@ -15,9 +16,8 @@ def get_model() -> tuple[Any, Any, Any]:
     return model, preprocess, tokenizer
 
 
-
 def embed_image(pil_image) -> list[float]:
-    model, preprocess, _= get_model()
+    model, preprocess, _ = get_model()
     with torch.no_grad():
         x = preprocess(pil_image).unsqueeze(0)
         vec = model.encode_image(x)
