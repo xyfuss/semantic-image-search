@@ -37,3 +37,15 @@ def test_length_username(client):
     r = client.post("/auth/register", json={"username": "a" * 31, "password": "testpassword123"})
     assert r.status_code == 422
 
+def test_me_valid_token(client, make_user):
+    alice = make_user("alice")
+    bob = make_user("bob")
+
+    r = client.get("/auth/me", headers=alice)
+    body = r.json()
+
+    assert r.status_code == 200
+    assert body["username"] == "alice"
+    assert "id" in body
+    assert "password_hash" not in body
+    assert "password" not in body
